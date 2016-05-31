@@ -1,4 +1,4 @@
-package com.coolweather.app.util;
+package util;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -9,7 +9,6 @@ import java.net.URL;
 public class HttpUtil {
 	public static void sendHttpRequest(final String address,final HttpCallbackListener listener){
 		new Thread(new Runnable() {
-			
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub

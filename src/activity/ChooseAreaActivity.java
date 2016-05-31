@@ -1,12 +1,13 @@
-package com.coolweather.app.activity;
+package activity;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import util.HttpCallbackListener;
+import util.HttpUtil;
+import util.Utility;
+
 import com.coolweather.app.R;
-import com.coolweather.app.util.HttpCallbackListener;
-import com.coolweather.app.util.HttpUtil;
-import com.coolweather.app.util.Utility;
 
 import model.City;
 import model.CoolWeatherDB;
@@ -16,7 +17,11 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.app.DownloadManager.Query;
 import android.app.PendingIntent.OnFinished;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.PersistableBundle;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.Window;
@@ -41,7 +46,6 @@ public class ChooseAreaActivity extends Activity {
 	private ArrayAdapter<String> adapter;
 	private CoolWeatherDB coolWeatherDB;
 	private List<String> dataList = new ArrayList<String>();
-
 	/**
 	 * 省列表
 	 */
@@ -71,21 +75,31 @@ public class ChooseAreaActivity extends Activity {
 	private int currentLevel;
 
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
+	public void onCreate(Bundle savedInstanceState,
+			PersistableBundle persistentState) {
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
+		SharedPreferences prefs = PreferenceManager
+				.getDefaultSharedPreferences(this);
+		if (prefs.getBoolean("city_selected", false)) {
+			Intent intent = new Intent(this, WeatherActivity.class);
+			startActivity(intent);
+			finish();
+			return;
+		}
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.choose_area);
 		listView = (ListView) findViewById(R.id.list_view);
 		titleText = (TextView) findViewById(R.id.title_text);
 		adapter = new ArrayAdapter<String>(this,
-				android.R.layout.simple_list_item_1, dataList);
+				android.R.layout.simple_expandable_list_item_1, dataList);
 		listView.setAdapter(adapter);
 		coolWeatherDB = CoolWeatherDB.getInstance(this);
 		listView.setOnItemClickListener(new OnItemClickListener() {
+
 			@Override
-			public void onItemClick(AdapterView<?> arg0, View view, int index,
-					long arg3) {
+			public void onItemClick(AdapterView<?> parent, View view,
+					int index, long id) {
 				// TODO Auto-generated method stub
 				if (currentLevel == LEVEL_PROVINCE) {
 					selectedProvince = provinceList.get(index);
@@ -93,12 +107,17 @@ public class ChooseAreaActivity extends Activity {
 				} else if (currentLevel == LEVEL_CITY) {
 					selectedCity = cityList.get(index);
 					queryCounties();
+				} else if (currentLevel == LEVEL_COUNTY) {
+					String countyCode = countyList.get(index).getCountyCode();
+					Intent intent = new Intent(ChooseAreaActivity.this,
+							WeatherActivity.class);
+					intent.putExtra("county_code", countyCode);
+					startActivity(intent);
+					finish();
 				}
 			}
-
 		});
 		queryProvinces();// 加载省级数据
-
 	}
 
 	/**
@@ -176,14 +195,14 @@ public class ChooseAreaActivity extends Activity {
 
 		String address;
 		if (!TextUtils.isEmpty(code)) {
-			address = "http://www.weather.com.cn/data/list3/city" + code
-					+ ".xml";
+			address = "http://api.36wu.com" + code + ".xml";
 		} else {
-			address = "http://www.weather.con.cn/data/list3/city.xml";
+			address = "http://api.36wu.com/Weather/GetAreaList?authkey=c32f956a52db43f19a941642078a4e6f";
 		}
 		showProressDialog();
 		HttpUtil.sendHttpRequest(address, new HttpCallbackListener() {
-			private void OnFinish(String response) {
+			@Override
+			public void onFinish(String response) {
 				// TODO Auto-generated method stub
 				boolean result = false;
 				if ("province".equals(type)) {
@@ -214,9 +233,11 @@ public class ChooseAreaActivity extends Activity {
 						}
 					});
 				}
+
 			}
 
-			private void onError(Exception e) {
+			@Override
+			public void onError(Exception e) {
 				// TODO Auto-generated method stub
 				// 通过runOnUiThread()方法回到主线程处理逻辑
 				runOnUiThread(new Runnable() {
@@ -230,7 +251,6 @@ public class ChooseAreaActivity extends Activity {
 					}
 
 				});
-
 			}
 
 		});

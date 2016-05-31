@@ -3,7 +3,7 @@ package model;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.coolweather.app.db.CoolWeatherOpenHelper;
+import db.CoolWeatherOpenHelper;
 
 import android.content.ContentValues;
 import android.content.Context;

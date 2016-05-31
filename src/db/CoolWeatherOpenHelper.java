@@ -1,4 +1,4 @@
-package com.coolweather.app.db;
+package db;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
